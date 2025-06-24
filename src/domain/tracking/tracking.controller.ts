@@ -1,10 +1,11 @@
 // src/tracking/tracking.controller.ts
-import { Controller, Post, Get, Body, Param, Query, Put } from '@nestjs/common'; // Ajout de Put
+import { Controller, Post, Get, Body, Param, Query, Put, UseGuards } from '@nestjs/common'; // Ajout de Put
 import { TrackingService } from './tracking.service';
 import { CreateTrackingDto } from './dto/create-tracking.dto';
 import { UpdateTrackingLocationDto } from './dto/update-tracking.dto';
+import { AuthGuard } from '@nestjs/passport';
 
-
+@UseGuards(AuthGuard('jwt'))
 @Controller('tracking')
 export class TrackingController {
   constructor(private readonly trackingService: TrackingService) {}

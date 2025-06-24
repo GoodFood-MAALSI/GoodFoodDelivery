@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { TransportModesService } from './transport-modes.service';
 import { CreateTransportModeDto } from './dto/create-transport-mode.dto';
 import { UpdateTransportModeDto } from './dto/update-transport-mode.dto';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('transport-modes')
 export class TransportModesController {
   constructor(private readonly transportModesService: TransportModesService) {}
