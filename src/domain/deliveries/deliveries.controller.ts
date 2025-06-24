@@ -1,21 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { DeliveriesService } from './deliveries.service';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 import { Delivery } from './entities/delivery.entity';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('deliveries')
 export class DeliveriesController {
   constructor(
     private readonly deliveriesService: DeliveriesService,
-    // La ligne suivante a été supprimée, car Kafka est maintenant dans le service:
-    // @Inject('KAFKA_CLIENT_ORDERS') private readonly clientOrdersKafka: ClientKafka,
   ) {}
-
-  // La méthode onModuleInit a été supprimée, car Kafka est maintenant dans le service.
-  // async onModuleInit() {
-  //   await this.clientOrdersKafka.connect();
-  // }
 
   @Post()
   create(@Body() createDeliveryDto: CreateDeliveryDto): Promise<Delivery> {

@@ -1,100 +1,54 @@
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 import { TrackingService } from './tracking.service';
 import { UsersService } from '../users/users.service';
+import { Logger, OnModuleInit } from '@nestjs/common';
+import { UpdateTrackingLocationDto } from './dto/update-tracking.dto';
 
-interface LivreurState {
-    latitude: number;
-    longitude: number;
-    targetLatitude: number;
-    targetLongitude: number;
-    speed_kmh: number;
-}
+export class TrackingGateway implements OnModuleInit {
+  @WebSocketServer() server: Server; // Instance du serveur Socket.IO
 
-@WebSocketGateway({ cors: true })
-export class TrackingGateway {
-    @WebSocketServer()
-    server: Server;
+  private readonly logger = new Logger(TrackingGateway.name);
 
-    private livreurStates: Record<string, LivreurState> = {};
+  onModuleInit() {
+    this.logger.log('Location Gateway initialisée');
+    // Vous pouvez attacher des événements ici, ex:
+    this.server.on('connection', (socket) => {
+      this.logger.log(`Client connecté: ${socket.id}`);
+      // Vous pourriez authentifier l'utilisateur ici
+    });
+  }
 
-    constructor(
-        private readonly trackingService: TrackingService,
-        private readonly usersService: UsersService
-    ) {
-        this.startSimulation();
-    }
+  @SubscribeMessage('updateLocation') // Écoute l'événement 'updateLocation' du client
+  handleLocationUpdate(
+    @MessageBody() data: UpdateTrackingLocationDto,
+    @ConnectedSocket() client: Socket, // Accès à l'objet socket du client
+  ): { status: string; data: UpdateTrackingLocationDto } {
 
-    async startSimulation() {
-        const livreurs = await this.usersService.findAll();
-        for (const livreur of livreurs) {
-            this.livreurStates[livreur.id.toString()] = {
-                latitude: 50.6365,
-                longitude: 3.0635,
-                targetLatitude: 50.6400,
-                targetLongitude: 3.0700,
-                speed_kmh: this.randomSpeed(),
-            };
-        }
+    // Ici, vous traitriez la localisation en temps réel :
+    // 1. Sauvegarder dans une base de données (MongoDB, Redis, PostgreSQL)
+    // 2. Mettre à jour une carte en temps réel pour d'autres utilisateurs
+    // 3. Effectuer des calculs (distance, ETA)
+    // 4. Émettre l'information à d'autres clients (par exemple, à un administrateur qui suit les livreurs)
 
-        setInterval(async () => {
-            for (const livreur of livreurs) {
-                const livreurId = livreur.id;
-                const newPosition = this.moveTowardsTarget(livreurId);
+    // Exemple: Enregistrement dans une base de données (implémentation du service à prévoir)
+    // this.locationService.saveLocation(data);
 
-                await this.trackingService.createTracking(
-                    livreur.name,
-                    livreurId,
-                    newPosition.latitude,
-                    newPosition.longitude,
-                    newPosition.speed_kmh
-                );
+    // Exemple: Émettre la nouvelle localisation à tous les autres clients ou à un groupe spécifique
+    // this.server.emit('newLocationUpdate', data); // Émet à tous les clients connectés
+    // Ou pour un groupe/salle spécifique:
+    // client.broadcast.emit('newLocationUpdate', data); // Émet à tous sauf l'expéditeur
 
-                this.server.emit('positionUpdate', {
-                    livreur_name: livreur.name,
-                    livreur_id: livreurId,
-                    latitude: newPosition.latitude,
-                    longitude: newPosition.longitude,
-                    speed_kmh: newPosition.speed_kmh,
-                });
+    // Confirmer la réception au client
+    client.emit('locationConfirmed', { received: true, timestamp: new Date().toISOString() });
 
-                console.log(`📍 Mise à jour du livreur ${livreur.name} (${livreurId})`);
-            }
-        }, 1000);
-    }
-    moveTowardsTarget(livreurId: number) {
-        const livreur = this.livreurStates[livreurId];
+    return { status: 'success', data }; // Réponse ACK (acknowledgement) au client
+  }
 
-        if (!livreur) return { latitude: 50.6365, longitude: 3.0635, speed_kmh: 20 };
-
-        const { latitude, longitude, targetLatitude, targetLongitude, speed_kmh } = livreur;
-        const speed_mps = speed_kmh / 3.6;
-        const step = 0.0001 * speed_mps;
-
-        const newLat =
-            latitude + Math.sign(targetLatitude - latitude) * Math.min(step, Math.abs(targetLatitude - latitude));
-        const newLng =
-            longitude + Math.sign(targetLongitude - longitude) * Math.min(step, Math.abs(targetLongitude - longitude));
-        if (Math.abs(targetLatitude - newLat) < 0.0001 && Math.abs(targetLongitude - newLng) < 0.0001) {
-            this.setNewTarget(livreurId);
-        }
-        this.livreurStates[livreurId] = {
-            ...livreur,
-            latitude: newLat,
-            longitude: newLng,
-        };
-
-        return { latitude: newLat, longitude: newLng, speed_kmh };
-    }
-    setNewTarget(livreurId: number) {
-        const baseLat = 50.6365;
-        const baseLng = 3.0635;
-        this.livreurStates[livreurId].targetLatitude = baseLat + (Math.random() - 0.5) * 0.02;
-        this.livreurStates[livreurId].targetLongitude = baseLng + (Math.random() - 0.5) * 0.02;
-        this.livreurStates[livreurId].speed_kmh = this.randomSpeed();
-        console.log(`🎯 Nouveau point cible défini pour ${livreurId}`);
-    }
-    randomSpeed() {
-        return Math.random() * (30 - 10) + 10;
-    }
+  // Vous pouvez ajouter d'autres événements si nécessaire
+  @SubscribeMessage('disconnect')
+  handleDisconnect(@ConnectedSocket() client: Socket) {
+    this.logger.log(`Client déconnecté: ${client.id}`);
+    // Gérer la déconnexion, par exemple supprimer la dernière position connue ou marquer comme hors ligne
+  }
 }

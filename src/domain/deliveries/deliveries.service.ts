@@ -9,7 +9,7 @@ import { DeliveryStatus } from '../delivery-status/entities/delivery-status.enti
 import { ClientKafka } from '@nestjs/microservices';
 
 @Injectable()
-export class DeliveriesService implements OnModuleInit { // Implémentez OnModuleInit
+export class DeliveriesService implements OnModuleInit { 
   constructor(
     @InjectRepository(Delivery)
     private readonly deliveryRepository: Repository<Delivery>,
@@ -17,10 +17,9 @@ export class DeliveriesService implements OnModuleInit { // Implémentez OnModul
     private readonly transportModeRepository: Repository<TransportMode>,
     @InjectRepository(DeliveryStatus)
     private readonly deliveryStatusRepository: Repository<DeliveryStatus>,
-    @Inject('KAFKA_CLIENT_ORDERS') private readonly clientOrdersKafka: ClientKafka, // Injectez le client Kafka ici
+    @Inject('KAFKA_CLIENT_ORDERS') private readonly clientOrdersKafka: ClientKafka, 
   ) {}
 
-  // Hook de cycle de vie pour connecter le client Kafka
   async onModuleInit() {
     await this.clientOrdersKafka.connect();
   }
