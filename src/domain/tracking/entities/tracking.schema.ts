@@ -25,8 +25,7 @@ export class Tracking extends Document {
     coordinates: { 
       type: [Number],
       required: true,
-    },
-    index: '2dsphere', 
+    }, 
   })
   location: { 
     type: string;
@@ -42,3 +41,5 @@ export class Tracking extends Document {
 
 
 export const TrackingSchema = SchemaFactory.createForClass(Tracking);
+
+TrackingSchema.index({ location: '2dsphere' });

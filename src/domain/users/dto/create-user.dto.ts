@@ -1,20 +1,32 @@
-import { IsNotEmpty, IsNumber, IsString } from "@nestjs/class-validator";
+import { Transform } from 'class-transformer';
+import { IsEmail, IsNotEmpty, Matches, MinLength } from 'class-validator';
+import { lowerCaseTransformer } from 'src/domain/utils/transformers/lower-case.transformer';
+import { UserStatus } from '../entities/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
+  @ApiProperty({ example: 'example@gmail.com' })
+  @Transform(lowerCaseTransformer)
+  @IsNotEmpty()
+  @IsEmail()
+  email: string | null;
 
-    @IsString()
-    @IsNotEmpty()
-    name: string;
+  @ApiProperty({ example: 'Passw@rd1' })
+  @Matches(/^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*\W).*$/, {
+    message: 'Le mot de passe doit contenir au moins 1 majuscule, 1 minuscule, 1 chiffre et 1 caractère spécial.',
+  })  
+  @MinLength(8)
+  password?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    email: string;
+  @ApiProperty({ example: 'Antoine' })
+  @IsNotEmpty()
+  first_name: string | null;
 
-    @IsNumber()
-    @IsNotEmpty()
-    phone: number;
+  @ApiProperty({ example: 'Dupont' })
+  @IsNotEmpty()
+  last_name: string | null;
 
-    @IsString()
-    @IsNotEmpty()
-    password: string;
+  status?: UserStatus;
+
+  hash?: string | null;
 }

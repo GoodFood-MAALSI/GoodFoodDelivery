@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Users } from 'src/domain/users/entities/users.entity';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { User } from 'src/domain/users/entities/user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 
 @Entity()
@@ -9,8 +9,9 @@ export class UserAddress {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Users, user => user.userAddress) // Relation ManyToOne avec User
-  user: Users;
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'usersId' })
+  user: User;
 
   @ApiProperty({ example: 1})
   @Column()

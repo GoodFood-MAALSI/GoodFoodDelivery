@@ -17,11 +17,11 @@ export class DeliveriesService implements OnModuleInit {
     private readonly transportModeRepository: Repository<TransportMode>,
     @InjectRepository(DeliveryStatus)
     private readonly deliveryStatusRepository: Repository<DeliveryStatus>,
-    @Inject('KAFKA_CLIENT_ORDERS') private readonly clientOrdersKafka: ClientKafka, 
+    // @Inject('KAFKA_CLIENT_ORDERS') private readonly clientOrdersKafka: ClientKafka, 
   ) {}
 
   async onModuleInit() {
-    await this.clientOrdersKafka.connect();
+    // await this.clientOrdersKafka.connect();
   }
 
   async create(createDeliveryDto: CreateDeliveryDto) {
@@ -106,50 +106,50 @@ export class DeliveriesService implements OnModuleInit {
     return this.deliveryRepository.save(delivery);
   }
 
-  /**
-   * Accepte une commande, met à jour son statut de livraison en base de données,
-   * puis émet un événement Kafka.
-   * @param orderId L'ID de la commande à accepter.
-   * @returns La livraison mise à jour.
-   */
-  async acceptOrderByOrderId(orderId: number): Promise<Delivery> {
-    // 1. Trouver la livraison par order_id
-    const delivery = await this.deliveryRepository.findOne({
-      where: { order_id: orderId },
-      relations: ['deliveryStatus'],
-    });
+  // /**
+  //  * Accepte une commande, met à jour son statut de livraison en base de données,
+  //  * puis émet un événement Kafka.
+  //  * @param orderId L'ID de la commande à accepter.
+  //  * @returns La livraison mise à jour.
+  //  */
+  // async acceptOrderByOrderId(orderId: number): Promise<Delivery> {
+  //   // 1. Trouver la livraison par order_id
+  //   const delivery = await this.deliveryRepository.findOne({
+  //     where: { order_id: orderId },
+  //     relations: ['deliveryStatus'],
+  //   });
 
-    if (!delivery) {
-      throw new NotFoundException(`Delivery for order ID ${orderId} not found.`);
-    }
+  //   if (!delivery) {
+  //     throw new NotFoundException(`Delivery for order ID ${orderId} not found.`);
+  //   }
 
-    // 2. Trouver le statut "Accepté"
-    const ACCEPTED_DELIVERY_STATUS_ID = 2; // REMPLACEZ PAR L'ID RÉEL DE VOTRE STATUT "Accepté"
-    const acceptedStatus = await this.deliveryStatusRepository.findOne({
-      where: { id: ACCEPTED_DELIVERY_STATUS_ID },
-    });
+  //   // 2. Trouver le statut "Accepté"
+  //   const ACCEPTED_DELIVERY_STATUS_ID = 2; // REMPLACEZ PAR L'ID RÉEL DE VOTRE STATUT "Accepté"
+  //   const acceptedStatus = await this.deliveryStatusRepository.findOne({
+  //     where: { id: ACCEPTED_DELIVERY_STATUS_ID },
+  //   });
 
-    if (!acceptedStatus) {
-      throw new NotFoundException(`"Accepted" Delivery Status (ID: ${ACCEPTED_DELIVERY_STATUS_ID}) not found in database. Please ensure it exists.`);
-    }
+  //   if (!acceptedStatus) {
+  //     throw new NotFoundException(`"Accepted" Delivery Status (ID: ${ACCEPTED_DELIVERY_STATUS_ID}) not found in database. Please ensure it exists.`);
+  //   }
 
-    // 3. Mettre à jour le statut de la livraison et l'heure de début
-    delivery.deliveryStatus = acceptedStatus;
-    // Si votre entité Delivery a une colonne 'start_time', mettez-la à jour ici
-    // delivery.start_time = new Date();
+  //   // 3. Mettre à jour le statut de la livraison et l'heure de début
+  //   delivery.deliveryStatus = acceptedStatus;
+  //   // Si votre entité Delivery a une colonne 'start_time', mettez-la à jour ici
+  //   // delivery.start_time = new Date();
 
-    // 4. Sauvegarder la livraison mise à jour en base de données
-    const updatedDelivery = await this.deliveryRepository.save(delivery);
+  //   // 4. Sauvegarder la livraison mise à jour en base de données
+  //   const updatedDelivery = await this.deliveryRepository.save(delivery);
 
-    // 5. Émettre un événement Kafka APRÈS que la BDD a été mise à jour
-    this.clientOrdersKafka.emit('client-orders', {
-      eventType: 'order.accepted',
-      orderId: updatedDelivery.order_id,
-      deliveryId: updatedDelivery.id, // Inclure l'ID de la livraison si pertinent
-      timestamp: new Date().toISOString(),
-      newStatus: acceptedStatus.name, // Ex: 'Accepted'
-    });
+  //   // 5. Émettre un événement Kafka APRÈS que la BDD a été mise à jour
+  //   this.clientOrdersKafka.emit('client-orders', {
+  //     eventType: 'order.accepted',
+  //     orderId: updatedDelivery.order_id,
+  //     deliveryId: updatedDelivery.id, // Inclure l'ID de la livraison si pertinent
+  //     timestamp: new Date().toISOString(),
+  //     newStatus: acceptedStatus.name, // Ex: 'Accepted'
+  //   });
 
-    return updatedDelivery;
-  }
+  //   return updatedDelivery;
+  // }
 }

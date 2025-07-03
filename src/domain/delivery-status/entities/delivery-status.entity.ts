@@ -12,9 +12,6 @@ export class DeliveryStatus {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @OneToMany(() => Delivery, (delivery) => delivery.deliveryStatus) // Relation OneToMany avec Delivery
-  deliveries: Delivery[];
-
   @CreateDateColumn()
   created_at: Date;
 

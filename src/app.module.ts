@@ -29,7 +29,7 @@ import { TrackingModule } from './domain/tracking/tracking.module';
   ],
   controllers: [AppController],
   providers: [
-    AppService, // Keep your existing AppService
+    AppService, 
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({

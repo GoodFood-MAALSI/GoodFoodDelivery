@@ -8,7 +8,7 @@ import { UsersService } from "src/domain/users/users.service";
 import { AuthEmailLoginDto } from "./dtos/auth-email-login.dto";
 import { LoginResponseType } from "./types/login-response.type";
 import * as crypto from "crypto";
-import { User, UserStatus } from "src/domain/users/entities/user.entity";
+import { User, UserStatus } from "../users/entities/user.entity";
 import { SessionService } from "src/domain/session/session.service";
 import { Session } from "src/domain/session/entities/session.entity";
 import * as ms from "ms";

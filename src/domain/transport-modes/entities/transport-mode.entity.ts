@@ -19,9 +19,6 @@ export class TransportMode {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @OneToMany(() => Delivery, delivery => delivery.transport_mode) // Relation OneToMany avec Delivery
-  deliveries: Delivery[];
-
   @CreateDateColumn()
   created_at: Date;
 

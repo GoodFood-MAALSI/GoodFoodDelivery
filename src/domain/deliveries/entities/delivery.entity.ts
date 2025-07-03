@@ -1,11 +1,12 @@
 import { DeliveryStatus } from 'src/domain/delivery-status/entities/delivery-status.entity';
 import { TransportMode } from 'src/domain/transport-modes/entities/transport-mode.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Users } from 'src/domain/users/entities/users.entity';
+import { User } from 'src/domain/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -21,22 +22,25 @@ export class Delivery {
   @ApiProperty({ example: 120 })
   @Column()
   order_id: number;
-
-  @ManyToOne(() => Users, user => user.deliveries) // Relation ManyToOne with User
-  user: Users;
+  
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'usersId' })
+  user: User;
 
   @ApiProperty({ example: 580 })
   @Column()
   user_id: number;
 
-  @ManyToOne(() => TransportMode, transportMode => transportMode.deliveries) // Relation ManyToOne with TransportMode
+  @ManyToOne(() => TransportMode)
+  @JoinColumn({ name: 'transportModeId' })
   transport_mode: TransportMode;
 
   @ApiProperty({ example: 1 })
   @Column()
   transport_mode_id: number;
 
-  @ManyToOne(() => DeliveryStatus, deliveryStatus => deliveryStatus.deliveries) // Relation ManyToOne with TransportMode
+  @ManyToOne(() => DeliveryStatus)
+  @JoinColumn({ name: 'deliveryStatusId' })
   deliveryStatus: DeliveryStatus;
 
   @ApiProperty({ example: 160 })

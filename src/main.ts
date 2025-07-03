@@ -4,12 +4,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
 
-dotenv.config(); // Charge le fichier .env en tout début
+dotenv.config(); 
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Activer CORS avec les bonnes options
   app.enableCors({
     origin: '*',
     credentials: true,
@@ -17,10 +16,8 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   });
 
-  // Pipe de validation global
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
-  // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('API Documentation')
     .setDescription("Documentation de l'API NestJS avec Swagger")
@@ -33,7 +30,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('swagger', app, document);
 
-  // Démarrage du serveur
   await app.listen(process.env.APP_PORT);
 }
 bootstrap();

@@ -10,7 +10,6 @@ export class TrackingService {
   constructor(@InjectModel(Tracking.name) private trackingModel: Model<Tracking>) {}
 
   async create(createTrackingDto: CreateTrackingDto): Promise<Tracking> {
-    // Cette méthode est utile pour la première création d'un point de tracking
     const createdTracking = new this.trackingModel(createTrackingDto);
     return createdTracking.save();
   }
@@ -39,18 +38,16 @@ export class TrackingService {
   }
 async updateDriverLocation(
     livreurId: number,
-    updateDto: UpdateTrackingLocationDto // <-- Accepte le DTO ici
+    updateDto: UpdateTrackingLocationDto 
   ): Promise<Tracking> {
-    // Extrait les coordonnées du DTO
     const { coordinates: [longitude, latitude] } = updateDto.location;
 
-    // Construit l'objet de mise à jour pour Mongoose
     const updateData: any = {
       location: {
         type: 'Point',
         coordinates: [longitude, latitude],
       },
-      timestamp: new Date(), // Met à jour le timestamp à chaque mise à jour
+      timestamp: new Date(), 
     };
 
     if (updateDto.speedKmh !== undefined) {
@@ -58,9 +55,9 @@ async updateDriverLocation(
     }
 
     const updatedTracking = await this.trackingModel.findOneAndUpdate(
-      { livreurId: livreurId }, // Filtre par livreurId
-      { $set: updateData },     // Les données à mettre à jour
-      { new: true }             // Retourne le document mis à jour
+      { livreurId: livreurId }, 
+      { $set: updateData },     
+      { new: true }             
     ).exec();
 
     if (!updatedTracking) {

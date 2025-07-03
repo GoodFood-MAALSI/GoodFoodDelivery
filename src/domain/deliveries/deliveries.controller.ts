@@ -62,15 +62,15 @@ export class DeliveriesController {
   }
 
   // La route appelle désormais la méthode du service qui gère la logique complète
-  @Post('accept-order/:orderId')
-  async acceptOrder(@Param('orderId') orderId: string): Promise<Delivery> {
-    const parsedOrderId = +orderId;
+  // @Post('accept-order/:orderId')
+  // async acceptOrder(@Param('orderId') orderId: string): Promise<Delivery> {
+  //   const parsedOrderId = +orderId;
 
-    if (isNaN(parsedOrderId)) {
-      throw new Error('Invalid orderId provided. Must be a number.');
-    }
+  //   if (isNaN(parsedOrderId)) {
+  //     throw new Error('Invalid orderId provided. Must be a number.');
+  //   }
 
-    // Appelle la méthode du service qui maintenant gère la mise à jour de la BDD ET l'émission Kafka
-    return this.deliveriesService.acceptOrderByOrderId(parsedOrderId);
-  }
+  //   // Appelle la méthode du service qui maintenant gère la mise à jour de la BDD ET l'émission Kafka
+  //   return this.deliveriesService.acceptOrderByOrderId(parsedOrderId);
+  // }
 }
