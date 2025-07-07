@@ -1,34 +1,61 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional } from '@nestjs/class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateUserAddressDto } from './create-user-address.dto';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class UpdateUserAddressDto {
-  @ApiProperty({ example: '15', required: false }) // 'required: false' for Swagger UI
-  @IsOptional() // Marks the property as optional for validation
-  @IsString()
-  street_number?: string; // Marks the property as optional in TypeScript
+export class UpdateUserAddressDto extends PartialType(CreateUserAddressDto) {
+  @ApiPropertyOptional({
+    description: "Intitulé de l'adresse",
+    example: 'Travail',
+    type: String,
+  })
+  name?: string;
 
-  @ApiProperty({ example: 'rue de la mairie', required: false })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional({
+    description: 'Le numéro de la rue (ex. "12bis")',
+    example: '12bis',
+    type: String,
+  })
+  street_number?: string;
+
+  @ApiPropertyOptional({
+    description: 'Le nom de la rue',
+    example: 'Rue des Lilas',
+    type: String,
+  })
   street?: string;
 
-  @ApiProperty({ example: 'Armentieres', required: false })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional({
+    description: 'La ville',
+    example: 'Paris',
+    type: String,
+  })
   city?: string;
 
-  @ApiProperty({ example: '59280', required: false })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional({
+    description: 'Le code postal',
+    example: '75001',
+    type: String,
+  })
   postal_code?: string;
 
-  @ApiProperty({ example: 'France', required: false })
-  @IsOptional()
-  @IsString()
+  @ApiPropertyOptional({
+    description: 'Le pays',
+    example: 'France',
+    type: String,
+  })
   country?: string;
 
-  @ApiProperty({ example: true, required: false })
-  @IsOptional()
-  @IsBoolean()
-  is_default?: boolean;
+  @ApiPropertyOptional({
+    description: "Longitude de l'adresse (en degrés)",
+    example: 2.3522,
+    type: Number,
+  })
+  long?: number;
+
+  @ApiPropertyOptional({
+    description: "Latitude de l'adresse (en degrés)",
+    example: 48.8566,
+    type: Number,
+  })
+  lat?: number;
 }

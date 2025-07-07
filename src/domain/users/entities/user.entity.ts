@@ -13,12 +13,16 @@ import {
 import { EntityHelper } from "src/domain/utils/entity-helper";
 import { Exclude } from "class-transformer";
 import { hashPassword } from "src/domain/utils/helpers";
-import { ApiProperty } from "@nestjs/swagger";
 import { UserAddress } from "src/domain/user-addresses/entities/user-address.entity";
 
 export enum UserStatus {
   Active = "active",
   Inactive = "inactive",
+  Suspended = "suspended",
+}
+
+export enum UserRole {
+  Deliverer = "deliverer",
 }
 
 @Entity()
@@ -26,11 +30,9 @@ export class User extends EntityHelper {
   @PrimaryGeneratedColumn()
   id: number;
   
-  @ApiProperty({ example: 'email@gmail.com' })
   @Column({ type: String, unique: true, nullable: true })
   email: string | null;
 
-  @ApiProperty({ example: '123456789' })
   @Column({ nullable: true })
   @Exclude({ toPlainOnly: true })
   password: string;
@@ -51,34 +53,52 @@ export class User extends EntityHelper {
     }
   }
 
-  @ApiProperty({ example: UserStatus.Inactive })
   @Column({ type: "enum", enum: UserStatus, default: UserStatus.Inactive })
   status: UserStatus;
 
-  @ApiProperty({ example: 'Michel' })
   @Index()
   @Column({ type: String, nullable: true })
   first_name: string | null;
 
-  @ApiProperty({ example: 'Bourgeon' })
   @Index()
   @Column({ type: String, nullable: true })
   last_name: string | null;
 
-  @ApiProperty()
-  @CreateDateColumn()
-  created_at: Date;
+  @Column({ nullable: true })
+  street_number: string;
+
+  @Column({ nullable: true })
+  street: string;
+
+  @Column({ nullable: true })
+  city: string;
+
+  @Column({ nullable: true })
+  postal_code: string;
+
+  @Column({ nullable: true })
+  country: string;
+
+  @Column({ type: 'decimal', precision: 15, scale: 8, default: 0 })
+  long: number;
+
+  @Column({ type: 'decimal', precision: 15, scale: 8, default: 0 })
+  lat: number;
 
   @Column({ type: String, nullable: true })
   @Index()
   @Exclude({ toPlainOnly: true })
   hash: string | null;
 
-  @ApiProperty()
+  @CreateDateColumn()
+  created_at: Date;
+
   @UpdateDateColumn()
   updated_at: Date;
 
   @OneToMany(() => UserAddress, userAddress => userAddress.user)
   userAddress: UserAddress[];
 
+  @Column({ type: "enum", enum: UserRole, default: UserRole.Deliverer })
+  role: UserRole;
 }
