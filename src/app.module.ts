@@ -8,9 +8,8 @@ import { DeliveriesModule } from './domain/deliveries/deliveries.module';
 import { DeliveryStatusModule } from './domain/delivery-status/delivery-status.module';
 import { TransportModesModule } from './domain/transport-modes/transport-modes.module';
 import { UserAddressesModule } from './domain/user-addresses/user-addresses.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { TrackingModule } from './domain/tracking/tracking.module';
-import { HttpModule } from '@nestjs/axios';
 import { AuthModule } from './domain/auth/auth.module';
 import { SessionModule } from './domain/session/session.module';
 import { MailerModule } from './domain/mailer/mailer.module';
@@ -34,32 +33,11 @@ import { ForgotPasswordModule } from './domain/forgot-password/forgot-password.m
     TransportModesModule,
     UserAddressesModule,
     TrackingModule,
-    MongooseModule.forRoot(process.env.MONGODB_URI, {dbName: process.env.MONGODB_DATABASE,}),
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    HttpModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        timeout: 5000, 
-      }),
-      inject: [ConfigService],
+    MongooseModule.forRoot(process.env.MONGODB_URI, {
+      dbName: process.env.MONGODB_DATABASE,
     }),
   ],
   controllers: [AppController],
-  providers: [
-    AppService, 
-    {
-      provide: APP_PIPE,
-      useValue: new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    },
-  ],
-    exports: [
-    HttpModule 
-  ],
+  providers: [AppService],
 })
 export class AppModule {}
