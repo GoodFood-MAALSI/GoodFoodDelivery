@@ -6,10 +6,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import {Delivery} from './entities/delivery.entity'
 import { DeliveryStatus } from '../delivery-status/entities/delivery-status.entity';
 import { TransportMode } from '../transport-modes/entities/transport-mode.entity';
+import { OrdersService } from '../order/order.service';
+import { HttpModule } from '@nestjs/axios';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports : [DatabaseModule,TypeOrmModule.forFeature([Delivery]),TypeOrmModule.forFeature([DeliveryStatus]),TypeOrmModule.forFeature([TransportMode])],
+  imports : [DatabaseModule,TypeOrmModule.forFeature([Delivery]),TypeOrmModule.forFeature([DeliveryStatus]),TypeOrmModule.forFeature([TransportMode]), HttpModule,
+    ConfigModule],
   controllers: [DeliveriesController],
-  providers: [DeliveriesService],
+  providers: [DeliveriesService,OrdersService],
 })
 export class DeliveriesModule {}

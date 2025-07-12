@@ -55,6 +55,10 @@ export class Delivery {
   @Column()
   end_time: Date;
 
+  @ApiProperty({ example: '12345', description: 'Code de vérification à 5 chiffres pour la livraison.' })
+  @Column({ type: 'varchar', length: 5, unique: false, nullable: true }) 
+  verification_code: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
