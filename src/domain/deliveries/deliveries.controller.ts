@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { DeliveriesService } from './deliveries.service';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 import { Delivery } from './entities/delivery.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { VerifyCodeDto } from './dto/verify-code.dto';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('deliveries')
@@ -28,8 +30,12 @@ export class DeliveriesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDeliveryDto: UpdateDeliveryDto) {
-    return this.deliveriesService.update(+id, updateDeliveryDto);
+  @ApiOperation({ summary: 'Met à jour une livraison existante (générique)' })
+  @ApiBody({ type: UpdateDeliveryDto, description: 'Données de mise à jour de la livraison.' })
+  @ApiResponse({ status: 200, description: 'La livraison a été mise à jour avec succès.', type: Delivery })
+  @ApiResponse({ status: 404, description: 'Livraison, mode de transport ou statut non trouvé.' })
+  update(@Param('id') id: string, @Body() patchDeliveryDto: UpdateDeliveryDto): Promise<Delivery> {
+    return this.deliveriesService.update(+id, patchDeliveryDto);
   }
 
   @Delete(':id')
@@ -37,28 +43,26 @@ export class DeliveriesController {
     return this.deliveriesService.remove(+id);
   }
 
-  @Patch(':id/transport-mode/:transportModeId')
-  setTransportMode(
-    @Param('id') id: string,
-    @Param('transportModeId') transportModeId: string,
-  ): Promise<Delivery> {
-    return this.deliveriesService.setDeliveryTransportMode(+id, +transportModeId);
+
+  @Get(':livreurId/revenue')
+  async getLivreurRevenue(@Param('livreurId') livreurId: number): Promise<{ livreurId: number; totalRevenue: number }> {
+    const totalRevenue = await this.deliveriesService.calculateLivreurRevenue(livreurId);
+    return { livreurId, totalRevenue };
   }
 
-  @Patch(':id/delivery-status/:deliveryStatusId')
-  setDeliveryStatus(
+    @Post(':id/verify-code')
+  @HttpCode(HttpStatus.OK) // Retourne 200 OK pour une vérification réussie ou échouée (mais gérée)
+  @ApiOperation({ summary: 'Vérifie le code de livraison pour une commande' })
+  @ApiBody({ type: VerifyCodeDto, description: 'Le code de vérification à comparer.' })
+  @ApiResponse({ status: 200, description: 'Résultat de la vérification du code.', type: Boolean })
+  @ApiResponse({ status: 400, description: 'Requête invalide (ex: code non valide).' })
+  @ApiResponse({ status: 404, description: 'Livraison non trouvée.' })
+  async verifyCode(
     @Param('id') id: string,
-    @Param('deliveryStatusId') deliveryStatusId: string,
-  ): Promise<Delivery> {
-    return this.deliveriesService.setDeliveryStatus(+id, +deliveryStatusId);
-  }
-
-  @Patch(':id/status/:deliveryStatusId')
-  updateStatus(
-    @Param('id') id: string,
-    @Param('deliveryStatusId') deliveryStatusId: string,
-  ): Promise<Delivery> {
-    return this.deliveriesService.updateDeliveryStatus(+id, +deliveryStatusId);
+    @Body() body: VerifyCodeDto, // Utilise le DTO pour le corps de la requête
+  ): Promise<{ isValid: boolean }> {
+    const isValid = await this.deliveriesService.verifyDeliveryCode(+id, body.code);
+    return { isValid };
   }
 
   // La route appelle désormais la méthode du service qui gère la logique complète

@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 import { Delivery } from './entities/delivery.entity';
@@ -7,10 +7,13 @@ import { Repository } from 'typeorm';
 import { TransportMode } from '../transport-modes/entities/transport-mode.entity';
 import { DeliveryStatus } from '../delivery-status/entities/delivery-status.entity';
 import { ClientKafka } from '@nestjs/microservices';
+import { OrdersService } from '../order/order.service';
+import { VerifyCodeDto } from './dto/verify-code.dto';
 
 @Injectable()
 export class DeliveriesService implements OnModuleInit { 
   constructor(
+    private readonly ordersService: OrdersService,
     @InjectRepository(Delivery)
     private readonly deliveryRepository: Repository<Delivery>,
     @InjectRepository(TransportMode)
@@ -24,8 +27,15 @@ export class DeliveriesService implements OnModuleInit {
     // await this.clientOrdersKafka.connect();
   }
 
+    private generateVerificationCode(): string {
+    // Génère un nombre aléatoire entre 10000 et 99999
+    const code = Math.floor(10000 + Math.random() * 90000);
+    return code.toString();
+  }
+
   async create(createDeliveryDto: CreateDeliveryDto) {
     const delivery = this.deliveryRepository.create(createDeliveryDto);
+    delivery.verification_code = this.generateVerificationCode();
     return await this.deliveryRepository.save(delivery);
   }
 
@@ -40,17 +50,41 @@ export class DeliveriesService implements OnModuleInit {
     });
   }
 
-  async update(id: number, updateDeliveryDto: UpdateDeliveryDto) {
-    const delivery = await this.findOne(id);
+ async update(id: number, patchDeliveryDto: UpdateDeliveryDto): Promise<Delivery> {
+    const delivery = await this.deliveryRepository.findOne({
+      where: { id },
+      relations: ['transport_mode', 'deliveryStatus'], // Chargez les relations pour la mise à jour
+    });
 
     if (!delivery) {
       throw new NotFoundException(`Delivery with ID ${id} not found.`);
     }
 
-    Object.assign(delivery, updateDeliveryDto);
+    if (patchDeliveryDto.transport_mode_id !== undefined) {
+      const transportMode = await this.transportModeRepository.findOne({
+        where: { id: patchDeliveryDto.transport_mode_id },
+      });
+      if (!transportMode) {
+        throw new NotFoundException(`Transport Mode with ID ${patchDeliveryDto.transport_mode_id} not found.`);
+      }
+      delivery.transport_mode = transportMode;
+      delivery.transport_mode_id = patchDeliveryDto.transport_mode_id;
+    }
+
+    if (patchDeliveryDto.delivery_status_id !== undefined) {
+      const deliveryStatus = await this.deliveryStatusRepository.findOne({
+        where: { id: patchDeliveryDto.delivery_status_id },
+      });
+      if (!deliveryStatus) {
+        throw new NotFoundException(`Delivery Status with ID ${patchDeliveryDto.delivery_status_id} not found.`);
+      }
+      delivery.deliveryStatus = deliveryStatus;
+      delivery.delivery_status_id = patchDeliveryDto.delivery_status_id;
+    }
+    Object.assign(delivery, patchDeliveryDto);
+
     return await this.deliveryRepository.save(delivery);
   }
-
   async remove(id: number) {
     const delivery = await this.findOne(id);
 
@@ -60,51 +94,39 @@ export class DeliveriesService implements OnModuleInit {
     return await this.deliveryRepository.remove(delivery);
   }
 
-  async setDeliveryTransportMode(deliveryId: number, transportModeId: number): Promise<Delivery> {
-    const delivery = await this.deliveryRepository.findOne({ where: { id: deliveryId } });
-    const transportMode = await this.transportModeRepository.findOne({ where: { id: transportModeId } });
 
-    if (!delivery || !transportMode) {
-      throw new NotFoundException('Delivery or Transport Mode not found');
+    async calculateLivreurRevenue(livreurId: number): Promise<number> {
+    let totalRevenue = 0;
+
+    const deliveries = await this.deliveryRepository.find({ where: { user_id : livreurId } });
+
+    for (const delivery of deliveries) {
+      const order = await this.ordersService.getOrderById(delivery.order_id);
+      if (order && order.price) {
+        totalRevenue += order.price*0.1; 
+      }
     }
 
-    delivery.transport_mode = transportMode;
-    return this.deliveryRepository.save(delivery);
+    return totalRevenue;
   }
 
-  async setDeliveryStatus(deliveryId: number, deliveryStatusId: number): Promise<Delivery> {
-    const delivery = await this.deliveryRepository.findOne({ where: { id: deliveryId } });
-    const deliveryStatus = await this.deliveryStatusRepository.findOne({ where: { id: deliveryStatusId } });
-
-    if (!delivery || !deliveryStatus) {
-      throw new NotFoundException('Delivery or Delivery Status not found');
-    }
-
-    delivery.deliveryStatus = deliveryStatus;
-    return this.deliveryRepository.save(delivery);
-  }
-
-  async updateDeliveryStatus(deliveryId: number, deliveryStatusId: number): Promise<Delivery> {
+    async verifyDeliveryCode(deliveryId: number, code: string): Promise<boolean> {
     const delivery = await this.deliveryRepository.findOne({
       where: { id: deliveryId },
-      relations: ['deliveryStatus'],
     });
 
     if (!delivery) {
-      throw new NotFoundException(`Livraison avec l'ID ${deliveryId} non trouvée`);
+      throw new NotFoundException(`Livraison avec l'ID ${deliveryId} non trouvée.`);
     }
 
-    const deliveryStatus = await this.deliveryStatusRepository.findOne({
-      where: { id: deliveryStatusId },
-    });
-
-    if (!deliveryStatus) {
-      throw new NotFoundException(`Statut de livraison avec l'ID ${deliveryStatusId} non trouvé`);
+    // Comparaison insensible à la casse et aux espaces si nécessaire, mais pour un code numérique, une comparaison stricte est préférable
+    if (!code || code.length !== 5 || !/^\d{5}$/.test(code)) {
+        throw new BadRequestException('Le code de vérification doit être une chaîne de 5 chiffres.');
     }
 
-    delivery.deliveryStatus = deliveryStatus;
-    return this.deliveryRepository.save(delivery);
+    return delivery.verification_code === code;
   }
+
 
   // /**
   //  * Accepte une commande, met à jour son statut de livraison en base de données,
