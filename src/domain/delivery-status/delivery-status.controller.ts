@@ -4,7 +4,6 @@ import { CreateDeliveryStatusDto } from './dto/create-delivery-status.dto';
 import { UpdateDeliveryStatusDto } from './dto/update-delivery-status.dto';
 import { AuthGuard } from '@nestjs/passport';
 
-@UseGuards(AuthGuard('jwt'))
 @Controller('delivery-status')
 export class DeliveryStatusController {
   constructor(private readonly deliveryStatusService: DeliveryStatusService) {}

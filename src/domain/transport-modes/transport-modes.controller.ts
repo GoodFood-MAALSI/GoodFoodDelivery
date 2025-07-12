@@ -4,7 +4,6 @@ import { CreateTransportModeDto } from './dto/create-transport-mode.dto';
 import { UpdateTransportModeDto } from './dto/update-transport-mode.dto';
 import { AuthGuard } from '@nestjs/passport';
 
-@UseGuards(AuthGuard('jwt'))
 @Controller('transport-modes')
 export class TransportModesController {
   constructor(private readonly transportModesService: TransportModesService) {}

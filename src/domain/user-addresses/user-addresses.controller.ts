@@ -24,7 +24,6 @@ export class UserAddressesController {
 
   @Get('me')
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: "Récupérer les adresses de l'utilisateur connecté" })
   async getMyAddresses(@Req() req: Request) {
     const user = req.user;
