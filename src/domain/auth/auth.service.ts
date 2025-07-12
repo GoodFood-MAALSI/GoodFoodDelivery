@@ -3,24 +3,24 @@ import {
   HttpStatus,
   Injectable,
   UnauthorizedException,
-} from "@nestjs/common";
-import { UsersService } from "src/domain/users/users.service";
-import { AuthEmailLoginDto } from "./dtos/auth-email-login.dto";
-import { LoginResponseType } from "./types/login-response.type";
-import * as crypto from "crypto";
-import { User, UserStatus } from "../users/entities/user.entity";
-import { SessionService } from "src/domain/session/session.service";
-import { Session } from "src/domain/session/entities/session.entity";
-import * as ms from "ms";
-import { JwtService } from "@nestjs/jwt";
-import { AuthRegisterDto } from "./dtos/auth-register.dto";
-import { randomStringGenerator } from "@nestjs/common/utils/random-string-generator.util";
-import { compareHash } from "src/domain/utils/helpers";
-import { MailsService } from "src/domain/mails/mails.service";
-import { JwtPayloadType } from "./strategies/types/jwt-payload.type";
-import { NullableType } from "src/domain/utils/types/nullable.type";
-import { ForgotPasswordService } from "src/domain/forgot-password/forgot-password.service";
-import { JwtRefreshPayloadType } from "./strategies/types/jwt-refresh-payload.type";
+} from '@nestjs/common';
+import { UsersService } from 'src/domain/users/users.service';
+import { AuthEmailLoginDto } from './dtos/auth-email-login.dto';
+import { LoginResponseType } from './types/login-response.type';
+import * as crypto from 'crypto';
+import { User, UserRole, UserStatus } from '../users/entities/user.entity';
+import { SessionService } from 'src/domain/session/session.service';
+import { Session } from 'src/domain/session/entities/session.entity';
+import * as ms from 'ms';
+import { JwtService } from '@nestjs/jwt';
+import { AuthRegisterDto } from './dtos/auth-register.dto';
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
+import { compareHash } from 'src/domain/utils/helpers';
+import { MailsService } from 'src/domain/mails/mails.service';
+import { JwtPayloadType } from './strategies/types/jwt-payload.type';
+import { NullableType } from 'src/domain/utils/types/nullable.type';
+import { ForgotPasswordService } from 'src/domain/forgot-password/forgot-password.service';
+import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
 
 @Injectable()
 export class AuthService {
@@ -42,18 +42,28 @@ export class AuthService {
         {
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            email: "Non trouvé",
+            email: 'Non trouvé',
           },
         },
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
 
-    if (user.status === "inactive") {
+    if (user.status === UserStatus.Inactive) {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
           error: "L'adresse email de l'utilisateur doit être vérifié",
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (user.status === UserStatus.Suspended) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: 'Votre compte a été suspendu. Veuillez contacter le support.',
         },
         HttpStatus.FORBIDDEN,
       );
@@ -66,7 +76,7 @@ export class AuthService {
         {
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            password: "Mot de passe incorrect",
+            password: 'Mot de passe incorrect',
           },
         },
         HttpStatus.UNPROCESSABLE_ENTITY,
@@ -80,7 +90,7 @@ export class AuthService {
     const { token, refreshToken, tokenExpires } = await this.getTokensData({
       id: user.id,
       sessionId: session.id,
-      role: 'restaurateur', // Ajout du rôle
+      role: user.role,
     });
 
     return {
@@ -93,26 +103,27 @@ export class AuthService {
 
   async registerUser(registerDto: AuthRegisterDto): Promise<string> {
     const hash = crypto
-      .createHash("sha256")
+      .createHash('sha256')
       .update(randomStringGenerator())
-      .digest("hex");
+      .digest('hex');
 
     await this.usersService.createUser({
       ...registerDto,
       email: registerDto.email,
       status: UserStatus.Inactive,
       hash,
+      role: UserRole.Deliverer,
     });
 
     await this.mailsService.confirmRegisterUser({
       to: registerDto.email,
       data: {
         hash,
-        user: registerDto.last_name + " " + registerDto.first_name,
+        user: registerDto.last_name + ' ' + registerDto.first_name,
       },
     });
 
-    return "Un email de vérification a été envoyé. Veuillez vérifier votre boîte de réception.";
+    return 'Un email de vérification a été envoyé. Veuillez vérifier votre boîte de réception.';
   }
 
   async status(userJwtPayload: JwtPayloadType): Promise<NullableType<User>> {
@@ -130,7 +141,7 @@ export class AuthService {
       throw new HttpException(
         {
           status: HttpStatus.NOT_FOUND,
-          error: "Non trouvé",
+          error: 'Non trouvé',
         },
         HttpStatus.NOT_FOUND,
       );
@@ -140,7 +151,7 @@ export class AuthService {
     user.status = UserStatus.Active;
     await this.usersService.saveUser(user);
 
-    return "Votre compte a été vérifié avec succès !";
+    return 'Votre compte a été vérifié avec succès !';
   }
 
   async forgotPassword(email: string): Promise<string> {
@@ -160,10 +171,20 @@ export class AuthService {
       );
     }
 
+    if (user.status === UserStatus.Suspended) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: 'Votre compte a été suspendu. Veuillez contacter le support.',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const hash = crypto
-      .createHash("sha256")
+      .createHash('sha256')
       .update(randomStringGenerator())
-      .digest("hex");
+      .digest('hex');
     await this.forgotPasswordService.create({
       hash,
       user,
@@ -173,11 +194,11 @@ export class AuthService {
       to: email,
       data: {
         hash,
-        user: user.last_name + " " + user.first_name,
+        user: user.last_name + ' ' + user.first_name,
       },
     });
 
-    return "Si un utilisateur existe avec cette adresse email, un email lui a été envoyé.";
+    return 'Si un utilisateur existe avec cette adresse email, un email lui a été envoyé.';
   }
 
   async resetPassword(hash: string, password: string): Promise<string> {
@@ -192,7 +213,7 @@ export class AuthService {
         {
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            hash: "Non trouvé",
+            hash: 'Non trouvé',
           },
         },
         HttpStatus.UNPROCESSABLE_ENTITY,
@@ -200,6 +221,16 @@ export class AuthService {
     }
 
     const user = forgotReq.user;
+    if (user.status === UserStatus.Suspended) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: 'Votre compte a été suspendu. Veuillez contacter le support.',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     user.password = password;
 
     await this.sessionService.delete({
@@ -210,12 +241,12 @@ export class AuthService {
     await this.usersService.saveUser(user);
     await this.forgotPasswordService.delete(forgotReq.id);
 
-    return "Votre mot de passe a été réinitialisé avec succès !";
+    return 'Votre mot de passe a été réinitialisé avec succès !';
   }
 
   async refreshToken(
-    data: Pick<JwtRefreshPayloadType, "sessionId">,
-  ): Promise<Omit<LoginResponseType, "user">> {
+    data: Pick<JwtRefreshPayloadType, 'sessionId'>,
+  ): Promise<Omit<LoginResponseType, 'user'>> {
     const session = await this.sessionService.findOne({
       where: {
         id: data.sessionId,
@@ -226,10 +257,21 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
+    const user = await this.usersService.findOneUser({ id: session.user.id });
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur non trouvé');
+    }
+
+    if (user.status === UserStatus.Suspended) {
+      throw new UnauthorizedException(
+        'Votre compte a été suspendu. Veuillez contacter le support.',
+      );
+    }
+
     const { token, refreshToken, tokenExpires } = await this.getTokensData({
       id: session.user.id,
       sessionId: session.id,
-      role: 'restaurateur', // Ajout du rôle
+      role: user.role,
     });
 
     return {
@@ -239,18 +281,20 @@ export class AuthService {
     };
   }
 
-  async logout(data: Pick<JwtRefreshPayloadType, "sessionId">): Promise<string> {
+  async logout(
+    data: Pick<JwtRefreshPayloadType, 'sessionId'>,
+  ): Promise<string> {
     await this.sessionService.delete({
       id: data.sessionId,
     });
 
-    return "Déconnexion";
+    return 'Déconnexion';
   }
 
   private async getTokensData(data: {
-    id: User["id"];
-    sessionId: Session["id"];
-    role: string; // Ajout du rôle
+    id: User['id'];
+    sessionId: Session['id'];
+    role: UserRole;
   }) {
     const tokenExpiresIn = process.env.AUTH_JWT_TOKEN_EXPIRES_IN;
     const refreshExpiresIn = process.env.AUTH_REFRESH_TOKEN_EXPIRES_IN;

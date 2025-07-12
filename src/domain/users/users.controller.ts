@@ -8,26 +8,58 @@ import {
   UseGuards,
   HttpException,
   HttpStatus,
-  Request,
+  Query,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
-  ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtPayloadType } from '../auth/strategies/types/jwt-payload.type';
 import { User as UserDecorator } from './decorators/user.decorator';
-import { User } from './entities/user.entity';
+import { User, UserStatus } from './entities/user.entity';
 import * as jwt from 'jsonwebtoken';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Request } from 'express';
+import { FilterUsersDto } from './dto/filter-users.dto';
+import { Pagination } from '../utils/pagination';
 
-@ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Récupérer tous les utilisateurs' })
+  @ApiResponse({ status: 200, description: 'Liste des utilisateurs' })
+  @ApiResponse({ status: 403, description: 'Accès interdit' })
+  async findAll(
+    @Query() filterUsersDto: FilterUsersDto,
+    @Req() req: Request,
+  ): Promise<{ users: User[]; links: any; meta: any }> {
+
+    try {
+      const { users, total } = await this.usersService.findAllUsers(filterUsersDto);
+      const { links, meta } = Pagination.generatePaginationMetadata(
+        req,
+        filterUsersDto.page || 1,
+        total,
+        filterUsersDto.limit || 10,
+      );
+
+      return { users, links, meta };
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: 'Échec de la récupération des utilisateurs',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   @Get(':id')
   @ApiBearerAuth()
@@ -103,12 +135,7 @@ export class UsersController {
       userId,
       updateUserDto,
     );
-    return {
-      id: updatedUser.id,
-      first_name: updatedUser.first_name,
-      last_name: updatedUser.last_name,
-      updated_at: updatedUser.updated_at,
-    };
+    return updatedUser;
   }
 
   @Delete(':id')
@@ -150,6 +177,60 @@ export class UsersController {
     return this.usersService.deleteUser(userId);
   }
 
+  @Patch(':id/suspend')
+  @ApiOperation({ summary: 'Suspendre un utilisateur' })
+  @ApiResponse({ status: 200, description: 'Utilisateur suspendus avec succès' })
+  @ApiResponse({ status: 403, description: 'Accès interdit' })
+  @ApiResponse({ status: 404, description: 'Utilisateur non trouvé' })
+  @ApiResponse({ status: 400, description: 'Utilisateur déjà suspendu' })
+  async suspend(
+    @Param('id') id: string
+  ): Promise<{ message: string }> {
+    const userId = +id;
+
+    const user = await this.usersService.findOneUser({ id: userId });
+    if (!user) {
+      throw new HttpException('Utilisateur non trouvé', HttpStatus.NOT_FOUND);
+    }
+
+    if (user.status === UserStatus.Suspended) {
+      throw new HttpException(
+        'L\'utilisateur est déjà suspendu',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.usersService.suspendUser(userId);
+    return { message: 'Utilisateur suspendus avec succès' };
+  }
+
+  @Patch(':id/restore')
+  @ApiOperation({ summary: 'Réactiver un utilisateur' })
+  @ApiResponse({ status: 200, description: 'Utilisateur réactivés avec succès' })
+  @ApiResponse({ status: 403, description: 'Accès interdit' })
+  @ApiResponse({ status: 404, description: 'Utilisateur non trouvé' })
+  @ApiResponse({ status: 400, description: 'Utilisateur non suspendu' })
+  async restore(
+    @Param('id') id: string
+  ): Promise<{ message: string }> {
+    const userId = +id;
+
+    const user = await this.usersService.findOneUser({ id: userId });
+    if (!user) {
+      throw new HttpException('Utilisateur non trouvé', HttpStatus.NOT_FOUND);
+    }
+
+    if (user.status !== UserStatus.Suspended) {
+      throw new HttpException(
+        'L\'utilisateur n\'est pas suspendu',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.usersService.restoreUser(userId);
+    return { message: 'Utilisateur réactivés avec succès' };
+  }
+
   @Get('/verify/:userId')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
@@ -158,7 +239,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Non autorisé' })
   @ApiResponse({ status: 403, description: 'Rôle invalide' })
   @ApiResponse({ status: 404, description: 'Utilisateur non trouvé' })
-  async verifyRestaurateur(@Param('userId') userId: string, @Request() req) {
+  async verifyRestaurateur(@Param('userId') userId: string, @Req() req) {
 
     // Récupérer le token depuis l'en-tête Authorization
     const token = req.headers['authorization']?.split(' ')[1];

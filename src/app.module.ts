@@ -1,11 +1,9 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseModule } from './database/database.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './domain/users/users.module';
-import { APP_PIPE } from '@nestjs/core';
 import { DeliveriesModule } from './domain/deliveries/deliveries.module';
 import { DeliveryStatusModule } from './domain/delivery-status/delivery-status.module';
 import { TransportModesModule } from './domain/transport-modes/transport-modes.module';

@@ -12,7 +12,7 @@ export class MailsService {
   async confirmRegisterUser(
     mailData: MailData<{ hash: string; user: string }>,
   ): Promise<void> {
-    const frontendDomain = process.env.FRONTEND_DOMAIN;
+    // const frontendDomain = process.env.FRONTEND_DOMAIN;
     
     const templatePath = path.join(__dirname, 'templates', 'confirm.hbs');
     const imagePath = path.join(__dirname, 'img', 'logo_goodfood.jpg');
@@ -20,11 +20,11 @@ export class MailsService {
     await this.mailerService.sendMail({
       to: mailData.to,
       subject: 'Confirmer votre compte Goodfood',
-      text: `${frontendDomain}/confirm-email/${mailData.data.hash}`,
+      text: mailData.data.hash,
       templatePath,
       context: {
         fullname: mailData.data.user,
-        confirmationLink: `${frontendDomain}/confirm-email/${mailData.data.hash}`,
+        confirmationLink: mailData.data.hash,
       },
       attachments: [
         {
@@ -40,7 +40,7 @@ export class MailsService {
   async forgotPassword(
     mailData: MailData<{ hash: string; user: string }>,
   ): Promise<void> {
-    const frontendDomain = process.env.FRONTEND_DOMAIN;
+    // const frontendDomain = process.env.FRONTEND_DOMAIN;
     
     const templatePath = path.join(__dirname, 'templates', 'reset-password.hbs');
     const imagePath = path.join(__dirname, 'img', 'logo_goodfood.jpg');
@@ -48,11 +48,11 @@ export class MailsService {
     await this.mailerService.sendMail({
       to: mailData.to,
       subject: 'Réinitialisation de mot de passe',
-      text: `${frontendDomain}/password-change/${mailData.data.hash}`,
+      text: mailData.data.hash,
       templatePath,
       context: {
         fullname: mailData.data.user,
-        resetLink: `${frontendDomain}/password-change/${mailData.data.hash}`,
+        resetLink: mailData.data.hash,
       },
       attachments: [
         {

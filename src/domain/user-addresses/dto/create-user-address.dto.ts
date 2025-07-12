@@ -1,34 +1,76 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional } from "@nestjs/class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserAddressDto {
-  @ApiProperty({ example: "15"})
+  @ApiProperty({
+    description: "Intitulé de l'adresse",
+    example: 'Travail',
+    type: String,
+  })
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @ApiProperty({
+    description: 'Le numéro de la rue (ex. "12bis")',
+    example: '12bis',
+    type: String,
+  })
   @IsNotEmpty()
   @IsString()
   street_number: string;
 
-  @ApiProperty({ example: "rue de la mairie"})
+  @ApiProperty({
+    description: 'Le nom de la rue',
+    example: 'Rue des Lilas',
+    type: String,
+  })
   @IsNotEmpty()
   @IsString()
   street: string;
 
-  @ApiProperty({ example: "Armentieres"})
+  @ApiProperty({
+    description: 'La ville',
+    example: 'Paris',
+    type: String,
+  })
   @IsNotEmpty()
   @IsString()
   city: string;
 
-  @ApiProperty({ example: "59280"})
+  @ApiProperty({
+    description: 'Le code postal',
+    example: '75001',
+    type: String,
+  })
   @IsNotEmpty()
   @IsString()
   postal_code: string;
 
-  @ApiProperty({ example: "France"})
+  @ApiProperty({
+    description: 'Le pays',
+    example: 'France',
+    type: String,
+  })
   @IsNotEmpty()
   @IsString()
   country: string;
 
-  @ApiProperty({ example: true})
-  @IsOptional()
-  @IsBoolean()
-  is_default: boolean;
+  @ApiProperty({
+    description: 'Longitude de l\'adresse (en degrés)',
+    example: 2.3522,
+    type: Number,
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  long: number;
+
+  @ApiProperty({
+    description: 'Latitude de l\'adresse (en degrés)',
+    example: 48.8566,
+    type: Number,
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  lat: number;
 }

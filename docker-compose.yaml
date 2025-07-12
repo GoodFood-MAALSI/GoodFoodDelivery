@@ -4,12 +4,12 @@ services:
     image: postgres:15
     container_name: goodfood_delivery_db_container
     ports:
-      - '5433:5433'
+      - '5435:5435'
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: 3NvlIk8172Vc<h`:fd
       POSTGRES_DB: goodfood_delivery
-      PGPORT: 5433
+      PGPORT: 5435
 
   mongo: 
     image: mongo:latest 
@@ -18,10 +18,4 @@ services:
       - '27017:27017' 
     environment:
       MONGO_INITDB_ROOT_USERNAME: mongouser 
-      MONGO_INITDB_ROOT_PASSWORD: j2.kP-tA+hM_zC@xV=nE
-    volumes:
-      - mongo_data:/data/db 
-
-volumes:
-  postgres_data:
-  mongo_data: 
+      MONGO_INITDB_ROOT_PASSWORD: testpassword
