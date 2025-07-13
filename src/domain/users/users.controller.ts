@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -26,6 +27,7 @@ import * as jwt from 'jsonwebtoken';
 import { Request } from 'express';
 import { FilterUsersDto } from './dto/filter-users.dto';
 import { Pagination } from '../utils/pagination';
+import { BypassResponseWrapper } from '../utils/decorators/bypass-response-wrapper.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -276,5 +278,30 @@ export class UsersController {
     } catch (err) {
       throw new HttpException('Erreur de validation du token', HttpStatus.UNAUTHORIZED);
     }
+  }
+
+  @Get('interservice/:id')
+  @BypassResponseWrapper()
+  @ApiOperation({ summary: 'Récupérer les informations d’un livreur pour appels interservices' })
+  @ApiParam({ name: 'id', description: 'ID du livreur', type: Number })
+  @ApiResponse({ status: 200, description: 'Livreur récupéré avec succès', type: User })
+  @ApiResponse({ status: 400, description: 'ID invalide' })
+  @ApiResponse({ status: 404, description: 'Livreur non trouvé' })
+  async getDeliverer(@Param('id') id: string): Promise<Partial<User>> {
+    const userId = parseInt(id);
+    if (isNaN(userId)) {
+      throw new HttpException('ID doit être un nombre', HttpStatus.BAD_REQUEST);
+    }
+
+    const user = await this.usersService.findOneUser({ id: userId });
+    if (!user) {
+      throw new HttpException('Livreur non trouvé', HttpStatus.NOT_FOUND);
+    }
+
+    return {
+      id: user.id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+    };
   }
 }
