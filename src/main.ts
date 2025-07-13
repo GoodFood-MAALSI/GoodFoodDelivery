@@ -11,8 +11,12 @@ import { join } from 'path';
 import * as fs from 'fs/promises';
 import { ResponseInterceptor } from './domain/utils/interceptors/response.interceptor';
 import { AllExceptionsFilter } from './domain/utils/filters/http-exception.filter';
+import { TransportModesSeeder } from './database/seeders/transport-modes.seeder';
+import { DeliveryStatusSeeder } from './database/seeders/delivery-status.seeder';
+import { UserAddressSeeder } from './database/seeders/user-adresses.seeder';
+import { DeliveriesSeeder } from './database/seeders/deliveries.seeder';
 
-dotenv.config(); 
+dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -44,7 +48,6 @@ async function bootstrap() {
     .setTitle('API Documentation')
     .setDescription("Documentation de l'API Livreur NestJS avec Swagger")
     .setVersion('1.0')
-    .addTag("App", "Point d'entrée de l'api")
     .addServer(process.env.BACKEND_DOMAIN, 'Local dev')
     .addBearerAuth()
     .build();
@@ -53,7 +56,10 @@ async function bootstrap() {
   SwaggerModule.setup('swagger', app, document);
 
   // Exécuter les seeders en environnement de développement si nécessaire
-  if (process.env.NODE_ENV === 'development' && process.env.RUN_SEEDERS === 'true') {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    process.env.RUN_SEEDERS === 'true'
+  ) {
     const seedFilePath = join(__dirname, '.seeded');
     let hasBeenSeeded = false;
 
@@ -72,14 +78,15 @@ async function bootstrap() {
       const dataSource = app.get(DataSource);
       try {
         await runSeeders(dataSource, {
-          seeds: [
-            UserSeeder,
-          ],
+          seeds: [UserSeeder, UserAddressSeeder, TransportModesSeeder, DeliveryStatusSeeder, DeliveriesSeeder],
         });
         console.log('Seeders executed successfully for client API.');
 
         // Créer le fichier .seeded pour marquer l'exécution
-        await fs.writeFile(seedFilePath, 'Seeded on ' + new Date().toISOString());
+        await fs.writeFile(
+          seedFilePath,
+          'Seeded on ' + new Date().toISOString(),
+        );
       } catch (error) {
         console.error('Error running seeders for client API:', error);
         throw error;

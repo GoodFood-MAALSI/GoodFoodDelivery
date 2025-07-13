@@ -49,7 +49,7 @@ export class Delivery {
 
   @ApiProperty({ example: '2025-06-01T10:00:00Z' })
   @Column()
-  strat_time: Date;
+  start_time: Date;
 
   @ApiProperty({ example: '2025-06-01T10:00:00Z' })
   @Column()

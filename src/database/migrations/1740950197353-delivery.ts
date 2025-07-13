@@ -50,7 +50,7 @@ export class Delivery1740950197353 implements MigrationInterface {
                 "user_id" integer NOT NULL,
                 "transport_mode_id" integer NOT NULL,
                 "delivery_status_id" integer NOT NULL,
-                "strat_time" TIMESTAMP NOT NULL,
+                "start_time" TIMESTAMP NOT NULL,
                 "end_time" TIMESTAMP NOT NULL,
                 "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
                 "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
