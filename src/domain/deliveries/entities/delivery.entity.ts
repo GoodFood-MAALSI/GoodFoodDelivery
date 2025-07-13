@@ -24,7 +24,7 @@ export class Delivery {
   order_id: number;
   
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'usersId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @ApiProperty({ example: 580 })
@@ -32,7 +32,7 @@ export class Delivery {
   user_id: number;
 
   @ManyToOne(() => TransportMode)
-  @JoinColumn({ name: 'transportModeId' })
+  @JoinColumn({ name: 'transport_mode_id' })
   transport_mode: TransportMode;
 
   @ApiProperty({ example: 1 })
@@ -40,8 +40,8 @@ export class Delivery {
   transport_mode_id: number;
 
   @ManyToOne(() => DeliveryStatus)
-  @JoinColumn({ name: 'deliveryStatusId' })
-  deliveryStatus: DeliveryStatus;
+  @JoinColumn({ name: 'delivery_status_id' })
+  delivery_status: DeliveryStatus;
 
   @ApiProperty({ example: 160 })
   @Column()

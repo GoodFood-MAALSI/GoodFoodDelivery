@@ -39,13 +39,17 @@ export class DeliveriesService implements OnModuleInit {
   }
 
   async findAll() {
-    return await this.deliveryRepository.find();
+    return await this.deliveryRepository.find(
+      {
+        relations: ['transport_mode', 'delivery_status'],
+      }
+    );
   }
 
   async findOne(id: number) {
     return await this.deliveryRepository.findOne({
       where: { id },
-      relations: ['transport_mode', 'deliveryStatus'],
+      relations: ['transport_mode', 'delivery_status'],
     });
   }
 
@@ -93,7 +97,7 @@ export class DeliveriesService implements OnModuleInit {
   //   // 1. Trouver la livraison par order_id
   //   const delivery = await this.deliveryRepository.findOne({
   //     where: { order_id: orderId },
-  //     relations: ['deliveryStatus'],
+  //     relations: ['delivery_status'],
   //   });
 
   //   if (!delivery) {
