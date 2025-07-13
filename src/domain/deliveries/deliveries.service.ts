@@ -1,6 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
-import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 import { Delivery } from './entities/delivery.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -48,50 +47,6 @@ export class DeliveriesService implements OnModuleInit {
       where: { id },
       relations: ['transport_mode', 'deliveryStatus'],
     });
-  }
-
- async update(id: number, patchDeliveryDto: UpdateDeliveryDto): Promise<Delivery> {
-    const delivery = await this.deliveryRepository.findOne({
-      where: { id },
-      relations: ['transport_mode', 'deliveryStatus'], // Chargez les relations pour la mise à jour
-    });
-
-    if (!delivery) {
-      throw new NotFoundException(`Delivery with ID ${id} not found.`);
-    }
-
-    if (patchDeliveryDto.transport_mode_id !== undefined) {
-      const transportMode = await this.transportModeRepository.findOne({
-        where: { id: patchDeliveryDto.transport_mode_id },
-      });
-      if (!transportMode) {
-        throw new NotFoundException(`Transport Mode with ID ${patchDeliveryDto.transport_mode_id} not found.`);
-      }
-      delivery.transport_mode = transportMode;
-      delivery.transport_mode_id = patchDeliveryDto.transport_mode_id;
-    }
-
-    if (patchDeliveryDto.delivery_status_id !== undefined) {
-      const deliveryStatus = await this.deliveryStatusRepository.findOne({
-        where: { id: patchDeliveryDto.delivery_status_id },
-      });
-      if (!deliveryStatus) {
-        throw new NotFoundException(`Delivery Status with ID ${patchDeliveryDto.delivery_status_id} not found.`);
-      }
-      delivery.deliveryStatus = deliveryStatus;
-      delivery.delivery_status_id = patchDeliveryDto.delivery_status_id;
-    }
-    Object.assign(delivery, patchDeliveryDto);
-
-    return await this.deliveryRepository.save(delivery);
-  }
-  async remove(id: number) {
-    const delivery = await this.findOne(id);
-
-    if (!delivery) {
-      throw new NotFoundException(`Delivery with ID ${id} not found.`);
-    }
-    return await this.deliveryRepository.remove(delivery);
   }
 
 
