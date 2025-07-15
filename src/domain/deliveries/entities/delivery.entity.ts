@@ -51,8 +51,8 @@ export class Delivery {
   @Column()
   start_time: Date;
 
-  @ApiProperty({ example: '2025-06-01T10:00:00Z' })
-  @Column()
+  @ApiPropertyOptional({ example: '2025-06-01T10:00:00Z' })
+  @Column({ nullable: true })
   end_time: Date;
 
   @ApiProperty({ example: '12345', description: 'Code de vérification à 5 chiffres pour la livraison.' })
@@ -65,4 +65,3 @@ export class Delivery {
   @UpdateDateColumn()
   updatedAt: Date;
 }
-
