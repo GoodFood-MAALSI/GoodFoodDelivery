@@ -19,8 +19,6 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags }
 import { Request } from 'express'; 
 import { JwtPayloadType } from '../auth/strategies/types/jwt-payload.type'; 
 
-
-@ApiTags('Tracking') 
 @Controller('tracking')
 export class TrackingController {
   constructor(private readonly trackingService: TrackingService) {}

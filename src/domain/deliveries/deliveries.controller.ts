@@ -25,9 +25,8 @@ import { VerifyCodeDto } from './dto/verify-code.dto';
 import { Request } from 'express';
 import { JwtPayloadType } from '../auth/strategies/types/jwt-payload.type';
 import { DeliveriesService } from './deliveries.service';
-import { AuthGuard } from 'node_modules/@nestjs/passport';
+import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Deliveries')
 @Controller('deliveries')
 export class DeliveriesController {
   constructor(private readonly deliveriesService: DeliveriesService) {}

@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiExcludeEndpoint,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -281,6 +282,7 @@ export class UsersController {
   }
 
   @Get('interservice/:id')
+  @ApiExcludeEndpoint()
   @BypassResponseWrapper()
   @ApiOperation({ summary: 'Récupérer les informations d’un livreur pour appels interservices' })
   @ApiParam({ name: 'id', description: 'ID du livreur', type: Number })
