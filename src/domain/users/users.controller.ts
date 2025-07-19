@@ -242,7 +242,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Non autorisé' })
   @ApiResponse({ status: 403, description: 'Rôle invalide' })
   @ApiResponse({ status: 404, description: 'Utilisateur non trouvé' })
-  async verifyRestaurateur(@Param('userId') userId: string, @Req() req) {
+  async verifyDeliverer(@Param('userId') userId: string, @Req() req) {
 
     // Récupérer le token depuis l'en-tête Authorization
     const token = req.headers['authorization']?.split(' ')[1];
@@ -262,7 +262,7 @@ export class UsersController {
         throw new HttpException('ID ou rôle manquant dans le token', HttpStatus.UNAUTHORIZED);
       }
 
-      if (authRole !== 'restaurateur') {
+      if (authRole !== 'deliverer') {
         throw new HttpException('Rôle invalide', HttpStatus.FORBIDDEN);
       }
 
@@ -275,7 +275,7 @@ export class UsersController {
         throw new HttpException('Utilisateur non trouvé', HttpStatus.NOT_FOUND);
       }
 
-      return { message: 'Restaurateur vérifié' };
+      return { message: 'Livreur vérifié' };
     } catch (err) {
       throw new HttpException('Erreur de validation du token', HttpStatus.UNAUTHORIZED);
     }
