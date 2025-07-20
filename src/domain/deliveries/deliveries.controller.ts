@@ -3,31 +3,28 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
-  UseGuards,
+  Req,
   HttpCode,
   HttpStatus,
-  Req,
   HttpException,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { Delivery } from './entities/delivery.entity';
 import {
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
-  ApiTags,
+  ApiBody,
   ApiExcludeEndpoint,
+  ApiOperation,
   ApiParam,
+  ApiResponse,
 } from '@nestjs/swagger';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { Request } from 'express';
 import { JwtPayloadType } from '../auth/strategies/types/jwt-payload.type';
 import { DeliveriesService } from './deliveries.service';
-import { AuthGuard } from '@nestjs/passport';
+import { InterserviceAuthGuardFactory } from '../interservice/guards/interservice-auth.guard';
 import { BypassResponseWrapper } from '../utils/decorators/bypass-response-wrapper.decorator';
 
 @Controller('deliveries')
@@ -35,188 +32,69 @@ export class DeliveriesController {
   constructor(private readonly deliveriesService: DeliveriesService) {}
 
   @Post()
+  @UseGuards(InterserviceAuthGuardFactory(['deliverer']))
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Crée une nouvelle livraison' })
-  @ApiResponse({
-    status: 201,
-    description: 'La livraison a été créée avec succès.',
-    type: Delivery,
-  })
-  @ApiResponse({ status: 401, description: 'Non autorisé.' })
   async create(
     @Body() createDeliveryDto: CreateDeliveryDto,
     @Req() req: Request,
   ): Promise<Delivery> {
-    try {
-      const user = req.user as JwtPayloadType;
-      if (!user || !user.id) {
-        throw new HttpException(
-          'Utilisateur non authentifié',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-      createDeliveryDto.user_id = user.id;
-
-      return await this.deliveriesService.create(createDeliveryDto);
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        {
-          message: 'Échec de la création de la livraison',
-          error: error.message,
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    const user = req.user as JwtPayloadType;
+    createDeliveryDto.user_id = user.id;
+    return this.deliveriesService.create(createDeliveryDto);
   }
 
   @Get()
+  @UseGuards(InterserviceAuthGuardFactory(['super-admin', 'admin']))
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Récupère toutes les livraisons' })
-  @ApiResponse({
-    status: 200,
-    description: 'Liste de toutes les livraisons.',
-    type: [Delivery],
-  })
-  @ApiResponse({ status: 401, description: 'Non autorisé.' })
   findAll(): Promise<Delivery[]> {
     return this.deliveriesService.findAll();
   }
 
   @Get(':id')
+  @UseGuards(InterserviceAuthGuardFactory(['client', 'deliverer', 'super-admin', 'admin', 'restaurateur']))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Récupère une livraison par son ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'La livraison trouvée.',
-    type: Delivery,
-  })
-  @ApiResponse({ status: 404, description: 'Livraison non trouvée.' })
-  @ApiResponse({ status: 401, description: 'Non autorisé.' })
-  findOne(@Param('id') id: string): Promise<Delivery> {
-    return this.deliveriesService.findOne(+id);
+  async findOne(@Param('id') id: string, @Req() req: Request): Promise<Delivery> {
+    const user = req.user as JwtPayloadType;
+    return this.deliveriesService.findOne(+id, user);
   }
 
-
   @Get(':livreurId/revenue')
+  @UseGuards(InterserviceAuthGuardFactory(['deliverer']))
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Calcule le revenu total d\'un livreur et inclut les commandes liées' })
-  @ApiResponse({ status: 200, description: 'Revenu total du livreur et commandes associées.', schema: {
-    type: 'object',
-    properties: {
-      livreurId: { type: 'number' },
-      totalRevenue: { type: 'number' },
-      orders: { type: 'array', items: { type: 'object' } } 
-    }
-  }})
-  @ApiResponse({ status: 401, description: 'Non autorisé.' })
+  @ApiOperation({ summary: 'Calcule le revenu total du livreur' })
   async getLivreurRevenue(
     @Param('livreurId') livreurId: number,
     @Req() req: Request,
-  ): Promise<{ livreurId: number; totalRevenue: number; orders: any[] }> { 
-    try {
-      const user = req.user as JwtPayloadType;
-      if (!user || !user.id) {
-        throw new HttpException(
-          'Utilisateur non authentifié',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      const result = await this.deliveriesService.calculateLivreurRevenueWithOrders(livreurId);
-      return result;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        {
-          message: 'Échec de la récupération des revenus du livreur',
-          error: error.message,
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+  ): Promise<{ livreurId: number; totalRevenue: number; orders: any[] }> {
+    const user = req.user as JwtPayloadType;
+    return this.deliveriesService.calculateLivreurRevenueWithOrders(livreurId, user);
   }
 
   @Post(':id/verify-code')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(InterserviceAuthGuardFactory(['deliverer']))
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Vérifie le code de livraison pour une commande' })
-  @ApiBody({
-    type: VerifyCodeDto,
-    description: 'Le code de vérification à comparer.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Résultat de la vérification du code.',
-    type: Boolean,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Requête invalide (ex: code non valide).',
-  })
-  @ApiResponse({ status: 404, description: 'Livraison non trouvée.' })
-  @ApiResponse({ status: 401, description: 'Non autorisé.' })
+  @ApiOperation({ summary: 'Vérifie le code de livraison' })
   async verifyCode(
     @Param('id') id: string,
     @Body() body: VerifyCodeDto,
     @Req() req: Request,
   ): Promise<{ isValid: boolean }> {
-    try {
-      const user = req.user as JwtPayloadType;
-      if (!user || !user.id) {
-        throw new HttpException(
-          'Utilisateur non authentifié',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-      const isValid = await this.deliveriesService.verifyDeliveryCode(
-        +id,
-        body.code,
-      );
-      return { isValid };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        {
-          message: 'Échec de la vérification du code de livraison',
-          error: error.message,
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    const user = req.user as JwtPayloadType;
+    return this.deliveriesService.verifyDeliveryCode(+id, body.code, user);
   }
 
   @Get('interservice/order/:orderId')
   @ApiExcludeEndpoint()
   @BypassResponseWrapper()
-  // @UseGuards(InterserviceAuthGuardFactory(['order']))
-  @ApiOperation({ summary: 'Récupérer une livraison pour une commande pour appels interservices' })
-  @ApiParam({ name: 'orderId', description: 'ID de la commande', type: Number })
-  @ApiResponse({
-    status: 200,
-    description: 'Livraison récupérée avec succès',
-    type: Delivery,
-  })
-  @ApiResponse({ status: 400, description: 'ID invalide' })
-  @ApiResponse({ status: 404, description: 'Livraison non trouvée' })
   async getDeliveryByOrderId(@Param('orderId') orderId: string): Promise<Delivery | null> {
     const parsedOrderId = parseInt(orderId);
     if (isNaN(parsedOrderId)) {
-      throw new HttpException('ID de la commande doit être un nombre', HttpStatus.BAD_REQUEST);
+      throw new HttpException('ID commande invalide', HttpStatus.BAD_REQUEST);
     }
-
-    const delivery = await this.deliveriesService.findByOrderId(parsedOrderId);
-    if (!delivery) {
-      return null;
-    }
-
-    return delivery;
+    return this.deliveriesService.findByOrderId(parsedOrderId);
   }
 }

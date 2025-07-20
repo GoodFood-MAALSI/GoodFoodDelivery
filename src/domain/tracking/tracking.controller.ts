@@ -18,14 +18,15 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'; 
 import { Request } from 'express'; 
 import { JwtPayloadType } from '../auth/strategies/types/jwt-payload.type'; 
+import { InterserviceAuthGuardFactory } from '../interservice/guards/interservice-auth.guard';
 
 @Controller('tracking')
 export class TrackingController {
   constructor(private readonly trackingService: TrackingService) {}
 
   @Post() 
+  @UseGuards(InterserviceAuthGuardFactory(['deliverer']))
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt')) 
   @ApiOperation({ summary: 'Crée une nouvelle entrée de suivi de livreur' })
   @ApiResponse({ status: 201, description: 'Entrée de suivi créée avec succès.' })
   @ApiResponse({ status: 401, description: 'Non autorisé.' })
@@ -59,6 +60,8 @@ export class TrackingController {
   }
 
   @Get() 
+  @UseGuards(InterserviceAuthGuardFactory(['deliverer']))
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Récupère toutes les entrées de suivi de livreurs' })
   @ApiResponse({ status: 200, description: 'Liste de toutes les entrées de suivi.' })
   async findAll() {
@@ -66,6 +69,8 @@ export class TrackingController {
   }
 
   @Get('latest/:livreurId')
+  @UseGuards(InterserviceAuthGuardFactory(['deliverer']))
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Récupère la dernière position connue d\'un livreur' })
   @ApiParam({ name: 'livreurId', description: 'ID du livreur', type: Number })
   @ApiResponse({ status: 200, description: 'Dernière position du livreur.' })
@@ -76,6 +81,8 @@ export class TrackingController {
 
 
   @Get('near')
+  @UseGuards(InterserviceAuthGuardFactory(['deliverer']))
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Trouve les livreurs à proximité d\'une coordonnée' })
   @ApiQuery({ name: 'lon', description: 'Longitude du point central', type: Number })
   @ApiQuery({ name: 'lat', description: 'Latitude du point central', type: Number })
@@ -91,8 +98,8 @@ export class TrackingController {
   }
 
   @Put('location/:livreurId') // PUT /tracking/location/:livreurId
+  @UseGuards(InterserviceAuthGuardFactory(['deliverer']))
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Met à jour la position d\'un livreur' })
   @ApiParam({ name: 'livreurId', description: 'ID du livreur', type: Number })
   @ApiResponse({ status: 200, description: 'Position du livreur mise à jour.' })

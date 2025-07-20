@@ -7,14 +7,17 @@ import { KafkaProducerService } from '../kafka/kafka-producer.service';
 import { DeliveriesService } from './deliveries.service';
 import { InterserviceService } from '../interservice/interservice.service';
 import { HttpModule } from '@nestjs/axios';
+import { InterserviceAuthGuard } from '../interservice/guards/interservice-auth.guard';
+import { UsersModule } from '../users/users.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Delivery]),
+    UsersModule,
     HttpModule,
     ConfigModule,
   ],
   controllers: [DeliveriesController],
-  providers: [DeliveriesService, KafkaProducerService, InterserviceService],
+  providers: [DeliveriesService, KafkaProducerService, InterserviceService, InterserviceAuthGuard],
   exports: [InterserviceService, DeliveriesService],
 
 })
