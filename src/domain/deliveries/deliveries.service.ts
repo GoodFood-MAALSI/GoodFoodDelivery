@@ -122,4 +122,11 @@ export class DeliveriesService {
     return delivery.verification_code === code;
   }
 
+  async findByOrderId(orderId: number): Promise<Delivery | null> {
+    return await this.deliveryRepository.findOne({
+      where: { order_id: orderId },
+      relations: ['transport_mode', 'delivery_status'],
+    });
+  }
+
 }

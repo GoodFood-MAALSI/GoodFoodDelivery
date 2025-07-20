@@ -20,12 +20,15 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiTags,
+  ApiExcludeEndpoint,
+  ApiParam,
 } from '@nestjs/swagger';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { Request } from 'express';
 import { JwtPayloadType } from '../auth/strategies/types/jwt-payload.type';
 import { DeliveriesService } from './deliveries.service';
 import { AuthGuard } from '@nestjs/passport';
+import { BypassResponseWrapper } from '../utils/decorators/bypass-response-wrapper.decorator';
 
 @Controller('deliveries')
 export class DeliveriesController {
@@ -188,5 +191,32 @@ export class DeliveriesController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @Get('interservice/order/:orderId')
+  @ApiExcludeEndpoint()
+  @BypassResponseWrapper()
+  // @UseGuards(InterserviceAuthGuardFactory(['order']))
+  @ApiOperation({ summary: 'Récupérer une livraison pour une commande pour appels interservices' })
+  @ApiParam({ name: 'orderId', description: 'ID de la commande', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Livraison récupérée avec succès',
+    type: Delivery,
+  })
+  @ApiResponse({ status: 400, description: 'ID invalide' })
+  @ApiResponse({ status: 404, description: 'Livraison non trouvée' })
+  async getDeliveryByOrderId(@Param('orderId') orderId: string): Promise<Delivery | null> {
+    const parsedOrderId = parseInt(orderId);
+    if (isNaN(parsedOrderId)) {
+      throw new HttpException('ID de la commande doit être un nombre', HttpStatus.BAD_REQUEST);
+    }
+
+    const delivery = await this.deliveriesService.findByOrderId(parsedOrderId);
+    if (!delivery) {
+      return null;
+    }
+
+    return delivery;
   }
 }
