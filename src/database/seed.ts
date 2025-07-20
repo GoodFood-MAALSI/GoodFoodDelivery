@@ -4,14 +4,13 @@ import AppDataSource from './data-source';
 import { UserSeeder } from './seeders/users.seeder';
 import { TransportModesSeeder } from './seeders/transport-modes.seeder';
 import { DeliveryStatusSeeder } from './seeders/delivery-status.seeder';
-import { UserAddressSeeder } from './seeders/user-adresses.seeder';
 import { DeliveriesSeeder } from './seeders/deliveries.seeder';
 
 async function seed() {
   try {
     await AppDataSource.initialize();
     await runSeeders(AppDataSource, {
-      seeds: [UserSeeder, UserAddressSeeder, TransportModesSeeder, DeliveryStatusSeeder, DeliveriesSeeder],
+      seeds: [UserSeeder, TransportModesSeeder, DeliveryStatusSeeder, DeliveriesSeeder],
     });
     await AppDataSource.destroy();
   } catch (err) {

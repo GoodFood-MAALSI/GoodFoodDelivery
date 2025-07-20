@@ -4,11 +4,10 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { Session } from '../session/entities/session.entity';
-import { UserAddress } from '../user-addresses/entities/user-address.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserAddress, Session]),
+    TypeOrmModule.forFeature([User, Session]),
   ],
   controllers: [UsersController],
   providers: [UsersService],

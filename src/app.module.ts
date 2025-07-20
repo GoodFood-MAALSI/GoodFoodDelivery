@@ -7,7 +7,6 @@ import { UsersModule } from './domain/users/users.module';
 import { DeliveriesModule } from './domain/deliveries/deliveries.module';
 import { DeliveryStatusModule } from './domain/delivery-status/delivery-status.module';
 import { TransportModesModule } from './domain/transport-modes/transport-modes.module';
-import { UserAddressesModule } from './domain/user-addresses/user-addresses.module';
 import { ConfigModule } from '@nestjs/config';
 import { TrackingModule } from './domain/tracking/tracking.module';
 import { AuthModule } from './domain/auth/auth.module';
@@ -31,7 +30,6 @@ import { ForgotPasswordModule } from './domain/forgot-password/forgot-password.m
     DeliveriesModule,
     DeliveryStatusModule,
     TransportModesModule,
-    UserAddressesModule,
     TrackingModule,
     MongooseModule.forRoot(process.env.MONGODB_URI, {
       dbName: process.env.MONGODB_DATABASE,

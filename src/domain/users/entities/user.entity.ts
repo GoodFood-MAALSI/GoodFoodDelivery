@@ -13,7 +13,6 @@ import {
 import { EntityHelper } from "src/domain/utils/entity-helper";
 import { Exclude } from "class-transformer";
 import { hashPassword } from "src/domain/utils/helpers";
-import { UserAddress } from "src/domain/user-addresses/entities/user-address.entity";
 
 export enum UserStatus {
   Active = "active",
@@ -95,9 +94,6 @@ export class User extends EntityHelper {
 
   @UpdateDateColumn()
   updated_at: Date;
-
-  @OneToMany(() => UserAddress, userAddress => userAddress.user)
-  userAddress: UserAddress[];
 
   @Column({ type: "enum", enum: UserRole, default: UserRole.Deliverer })
   role: UserRole;

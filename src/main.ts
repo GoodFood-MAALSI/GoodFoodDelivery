@@ -13,7 +13,6 @@ import { ResponseInterceptor } from './domain/utils/interceptors/response.interc
 import { AllExceptionsFilter } from './domain/utils/filters/http-exception.filter';
 import { TransportModesSeeder } from './database/seeders/transport-modes.seeder';
 import { DeliveryStatusSeeder } from './database/seeders/delivery-status.seeder';
-import { UserAddressSeeder } from './database/seeders/user-adresses.seeder';
 import { DeliveriesSeeder } from './database/seeders/deliveries.seeder';
 
 dotenv.config();
@@ -78,7 +77,7 @@ async function bootstrap() {
       const dataSource = app.get(DataSource);
       try {
         await runSeeders(dataSource, {
-          seeds: [UserSeeder, UserAddressSeeder, TransportModesSeeder, DeliveryStatusSeeder, DeliveriesSeeder],
+          seeds: [UserSeeder, TransportModesSeeder, DeliveryStatusSeeder, DeliveriesSeeder],
         });
         console.log('Seeders executed successfully for client API.');
 

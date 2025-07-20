@@ -6,7 +6,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { Session } from '../session/entities/session.entity';
 import { EntityCondition } from '../utils/types/entity-condition.type';
 import { NullableType } from '../utils/types/nullable.type';
-import { UserAddress } from '../user-addresses/entities/user-address.entity';
 import { FilterUsersDto } from './dto/filter-users.dto';
 
 @Injectable()
@@ -16,8 +15,6 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
-    @InjectRepository(UserAddress)
-    private readonly userAddressesRepository: Repository<UserAddress>,
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -81,7 +78,6 @@ export class UsersService {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
-    await this.userAddressesRepository.delete({ user: { id } });
     await this.sessionRepository.delete({ user: { id } });
     await this.usersRepository.delete(id);
 
