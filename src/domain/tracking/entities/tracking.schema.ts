@@ -12,6 +12,9 @@ export class Tracking extends Document {
   @Prop({ required: true, index: true }) 
   livreurId: number; 
 
+  @Prop({ required: true, index: true }) 
+  deliveryId: number; 
+
   @Prop({ required: true })
   livreurName: string; 
 

@@ -96,40 +96,47 @@ export class DeliveriesController {
     return this.deliveriesService.findOne(+id);
   }
 
-  // @Get(':livreurId/revenue')
-  // @ApiBearerAuth()
-  // @UseGuards(AuthGuard('jwt'))
-  // @ApiOperation({ summary: 'Calcule le revenu total d\'un livreur' })
-  // @ApiResponse({ status: 200, description: 'Revenu total du livreur.' })
-  // @ApiResponse({ status: 401, description: 'Non autorisé.' })
-  // async getLivreurRevenue(
-  //   @Param('livreurId') livreurId: number,
-  //   @Req() req: Request, // Injecte l'objet Request
-  // ): Promise<{ livreurId: number; totalRevenue: number }> {
-  //   try {
-  //     const user = req.user as JwtPayloadType;
-  //     if (!user || !user.id) {
-  //       throw new HttpException(
-  //         'Utilisateur non authentifié',
-  //         HttpStatus.UNAUTHORIZED,
-  //       );
-  //     }
 
-  //     const totalRevenue = await this.deliveriesService.calculateLivreurRevenue(livreurId);
-  //     return { livreurId, totalRevenue };
-  //   } catch (error) {
-  //     if (error instanceof HttpException) {
-  //       throw error;
-  //     }
-  //     throw new HttpException(
-  //       {
-  //         message: 'Échec du calcul du revenu du livreur',
-  //         error: error.message,
-  //       },
-  //       HttpStatus.INTERNAL_SERVER_ERROR,
-  //     );
-  //   }
-  // }
+  @Get(':livreurId/revenue')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Calcule le revenu total d\'un livreur et inclut les commandes liées' })
+  @ApiResponse({ status: 200, description: 'Revenu total du livreur et commandes associées.', schema: {
+    type: 'object',
+    properties: {
+      livreurId: { type: 'number' },
+      totalRevenue: { type: 'number' },
+      orders: { type: 'array', items: { type: 'object' } } 
+    }
+  }})
+  @ApiResponse({ status: 401, description: 'Non autorisé.' })
+  async getLivreurRevenue(
+    @Param('livreurId') livreurId: number,
+    @Req() req: Request,
+  ): Promise<{ livreurId: number; totalRevenue: number; orders: any[] }> { 
+    try {
+      const user = req.user as JwtPayloadType;
+      if (!user || !user.id) {
+        throw new HttpException(
+          'Utilisateur non authentifié',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      const result = await this.deliveriesService.calculateLivreurRevenueWithOrders(livreurId);
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        {
+          message: 'Échec de la récupération des revenus du livreur',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   @Post(':id/verify-code')
   @HttpCode(HttpStatus.OK)

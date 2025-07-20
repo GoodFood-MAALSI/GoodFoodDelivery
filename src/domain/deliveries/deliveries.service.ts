@@ -73,20 +73,33 @@ export class DeliveriesService {
     });
   }
 
-  // async calculateLivreurRevenue(livreurId: number): Promise<number> {
-  //   let totalRevenue = 0;
+  async calculateLivreurRevenueWithOrders(
+    livreurId: number,
+  ): Promise<{ livreurId: number; totalRevenue: number; orders: any[] }> {
+    const deliveries = await this.deliveryRepository.find({
+      where: {
+        user_id: livreurId,
+        delivery_status: { name: 'Delivered' }
+      },
+      relations: ['delivery_status'], 
+    });
 
-  //   const deliveries = await this.deliveryRepository.find({ where: { user_id : livreurId } });
+    let totalRevenue = 0;
+    const associatedOrders: any[] = [];
 
-  //   for (const delivery of deliveries) {
-  //     const order = await this.ordersService.getOrderById(delivery.order_id);
-  //     if (order && order.price) {
-  //       totalRevenue += order.price*0.1;
-  //     }
-  //   }
+    for (const delivery of deliveries) {
+      if (delivery.order_id) {
+        const order = await this.interserviceService.fetchOrder(delivery.order_id);
+        if (order) {
+          associatedOrders.push(order);
 
-  //   return totalRevenue;
-  // }
+          totalRevenue += order.subtotal*0.10 || 0;
+        }
+      }
+    }
+
+    return { livreurId, totalRevenue, orders: associatedOrders };
+  }
 
   async verifyDeliveryCode(deliveryId: number, code: string): Promise<boolean> {
     const delivery = await this.deliveryRepository.findOne({
@@ -109,50 +122,4 @@ export class DeliveriesService {
     return delivery.verification_code === code;
   }
 
-  // /**
-  //  * Accepte une commande, met à jour son statut de livraison en base de données,
-  //  * puis émet un événement Kafka.
-  //  * @param orderId L'ID de la commande à accepter.
-  //  * @returns La livraison mise à jour.
-  //  */
-  // async acceptOrderByOrderId(orderId: number): Promise<Delivery> {
-  //   // 1. Trouver la livraison par order_id
-  //   const delivery = await this.deliveryRepository.findOne({
-  //     where: { order_id: orderId },
-  //     relations: ['delivery_status'],
-  //   });
-
-  //   if (!delivery) {
-  //     throw new NotFoundException(`Delivery for order ID ${orderId} not found.`);
-  //   }
-
-  //   // 2. Trouver le statut "Accepté"
-  //   const ACCEPTED_DELIVERY_STATUS_ID = 2; // REMPLACEZ PAR L'ID RÉEL DE VOTRE STATUT "Accepté"
-  //   const acceptedStatus = await this.deliveryStatusRepository.findOne({
-  //     where: { id: ACCEPTED_DELIVERY_STATUS_ID },
-  //   });
-
-  //   if (!acceptedStatus) {
-  //     throw new NotFoundException(`"Accepted" Delivery Status (ID: ${ACCEPTED_DELIVERY_STATUS_ID}) not found in database. Please ensure it exists.`);
-  //   }
-
-  //   // 3. Mettre à jour le statut de la livraison et l'heure de début
-  //   delivery.deliveryStatus = acceptedStatus;
-  //   // Si votre entité Delivery a une colonne 'start_time', mettez-la à jour ici
-  //   // delivery.start_time = new Date();
-
-  //   // 4. Sauvegarder la livraison mise à jour en base de données
-  //   const updatedDelivery = await this.deliveryRepository.save(delivery);
-
-  //   // 5. Émettre un événement Kafka APRÈS que la BDD a été mise à jour
-  //   this.clientOrdersKafka.emit('client-orders', {
-  //     eventType: 'order.accepted',
-  //     orderId: updatedDelivery.order_id,
-  //     deliveryId: updatedDelivery.id, // Inclure l'ID de la livraison si pertinent
-  //     timestamp: new Date().toISOString(),
-  //     newStatus: acceptedStatus.name, // Ex: 'Accepted'
-  //   });
-
-  //   return updatedDelivery;
-  // }
 }

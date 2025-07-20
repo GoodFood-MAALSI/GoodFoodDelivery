@@ -15,6 +15,7 @@ import { HttpModule } from '@nestjs/axios';
   ],
   controllers: [DeliveriesController],
   providers: [DeliveriesService, KafkaProducerService, InterserviceService],
+  exports: [InterserviceService, DeliveriesService],
 
 })
 export class DeliveriesModule {}
