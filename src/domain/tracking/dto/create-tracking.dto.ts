@@ -33,6 +33,11 @@ export class CreateTrackingDto {
   @IsNotEmpty()
   livreurId: number;
 
+  @ApiProperty({ example: 1, description: 'ID of the delivery' })
+  @IsNumber()
+  @IsNotEmpty()
+  deliveryId: number;
+
   @ApiProperty({ example: 'Jacob', description: 'Name of the driver' })
   @IsString()
   @IsNotEmpty()

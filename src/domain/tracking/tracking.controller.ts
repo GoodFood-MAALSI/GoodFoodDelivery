@@ -24,7 +24,8 @@ export class TrackingController {
   constructor(private readonly trackingService: TrackingService) {}
 
   @Post() 
-  @ApiBearerAuth() 
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt')) 
   @ApiOperation({ summary: 'Crée une nouvelle entrée de suivi de livreur' })
   @ApiResponse({ status: 201, description: 'Entrée de suivi créée avec succès.' })
   @ApiResponse({ status: 401, description: 'Non autorisé.' })
@@ -91,6 +92,7 @@ export class TrackingController {
 
   @Put('location/:livreurId') // PUT /tracking/location/:livreurId
   @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Met à jour la position d\'un livreur' })
   @ApiParam({ name: 'livreurId', description: 'ID du livreur', type: Number })
   @ApiResponse({ status: 200, description: 'Position du livreur mise à jour.' })
